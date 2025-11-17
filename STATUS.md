@@ -1,15 +1,15 @@
 # Development Status - Sip N Play Inventory
 
-**Last Updated**: Session 1 - Phase 2A-2B Complete
-**Overall Progress**: ~30% (Phases 1-2 of 7)
+**Last Updated**: Session 2 - Phase 2C & 3A Complete
+**Overall Progress**: ~45% (Phases 1-2 Complete, Phase 3 In Progress)
 
 ---
 
-## ✅ Completed (Phases 1-2)
+## ✅ Completed (Phases 1-3A)
 
 ### Phase 1: Foundation Setup (100%)
 - [x] Next.js 14 with TypeScript
-- [x] Tailwind CSS with dark mode
+- [x] Tailwind CSS v4 with dark mode
 - [x] PostgreSQL database (Railway)
 - [x] Prisma ORM with complete schema (12 tables)
 - [x] Database migrated and seeded
@@ -33,7 +33,7 @@
 
 ### Phase 2B: UI Foundation (100%)
 - [x] shadcn/ui components installed
-- [x] Button, Input, Label, Card components
+- [x] Button, Input, Label, Card, Table components
 - [x] Toast notifications (sonner)
 - [x] Theme provider (dark mode)
 - [x] Mobile-optimized touch targets (48x48px)
@@ -42,33 +42,52 @@
 - [x] Utility functions (formatCurrency, etc.)
 - [x] Zod validation schemas
 
----
-
-## 🔄 In Progress (Phase 2C)
-
-### Phase 2C: Dashboard Layout (50%)
+### Phase 2C: Dashboard Layout (100%)
 - [x] Bottom navigation component created
 - [x] Route groups created ((dashboard))
-- [x] Theme provider added
-- [ ] Dashboard layout.tsx
-- [ ] Header with user info
-- [ ] Theme toggle component
-- [ ] Empty page shells (Items, Low Stock, Logs, Settings)
-- [ ] Test authentication flow
+- [x] Theme provider added to layouts
+- [x] Dashboard layout.tsx with auth checks
+- [x] Header with user info and dropdown menu
+- [x] Theme toggle component (light/dark/system)
+- [x] Empty page shells (Items, Low Stock, Logs, Settings)
+- [x] Build tested successfully (14 routes generated)
+- [x] Tailwind CSS 4 compatibility fixed
+- [x] Next.js 16 Suspense boundaries added
+- [x] Next.js 16 async params support
+
+### Phase 3A: Items API & List Page (100%)
+- [x] Items API routes (6 endpoints):
+  - [x] GET /api/items - List with pagination, search, filters
+  - [x] POST /api/items - Create new item
+  - [x] GET /api/items/[id] - Get single item
+  - [x] PUT /api/items/[id] - Update item
+  - [x] DELETE /api/items/[id] - Delete item (cascade)
+  - [x] POST /api/items/[id]/stock - Adjust stock with batch tracking
+- [x] Items list page with:
+  - [x] Table display with stock status
+  - [x] Search functionality
+  - [x] Pagination (20 items per page)
+  - [x] Visual indicators (critical, expiry, stock status)
+  - [x] Mobile-responsive design
+  - [x] Links to add/view items
 
 ---
 
-## 📋 To Do (Phases 3-6)
+## 🔄 In Progress (Phase 3B)
 
-### Phase 3: Core Inventory Features (0%)
-- [ ] Items API routes (GET, POST, PUT, DELETE)
-- [ ] Items list page
-- [ ] Search and filter functionality
+### Phase 3B: Item CRUD & Stock Management (0%)
+- [ ] Item detail page (/items/[id])
+- [ ] Add item page (/items/new)
+- [ ] Edit item page (/items/[id]/edit)
 - [ ] Stock adjustment modal
-- [ ] Stock adjustment API route
-- [ ] Item CRUD pages (add, edit, delete)
 - [ ] Image upload with optimization
-- [ ] Test stock adjustments (target <150ms)
+- [ ] Form validation with React Hook Form
+- [ ] Batch tracking UI for expiry items
+- [ ] Delete confirmation dialog
+
+---
+
+## 📋 To Do (Phases 4-6)
 
 ### Phase 4: Advanced Features (0%)
 - [ ] Batch tracking for expiry dates
@@ -103,15 +122,17 @@
 
 ## 🧪 Testing Status
 
-### Phase 1-2 Testing
+### Phases 1-3A Testing
 - [x] TypeScript compilation: ✅ No errors
-- [x] Git commit successful: ✅
-- [x] GitHub push successful: ✅
-- [ ] Local dev server (`npm run dev`)
-- [ ] Login flow test
-- [ ] Password setup flow test
-- [ ] API route testing
-- [ ] Mobile responsiveness check
+- [x] Production build: ✅ Successful (14 routes)
+- [x] Git commits: ✅ 4 commits pushed to GitHub
+- [x] Tailwind CSS 4 compatibility: ✅ Fixed
+- [x] Next.js 16 compatibility: ✅ Fixed
+- [ ] Local dev server test
+- [ ] Login flow E2E test
+- [ ] API endpoint testing
+- [ ] Items list page functional test
+- [ ] Stock adjustment performance test (<150ms)
 
 ---
 
@@ -122,20 +143,38 @@ snp-inventory/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
-│   │   │   └── login/              ✅ Complete
+│   │   │   └── login/              ✅ Complete (with Suspense)
 │   │   ├── (dashboard)/
-│   │   │   ├── items/              📁 Empty
-│   │   │   ├── low-stock/          📁 Empty
-│   │   │   ├── logs/               📁 Empty
-│   │   │   └── settings/           📁 Empty
+│   │   │   ├── items/              ✅ List page complete
+│   │   │   │   └── [id]/           📁 To implement
+│   │   │   ├── low-stock/          📁 Empty shell
+│   │   │   ├── logs/               📁 Empty shell
+│   │   │   ├── settings/           📁 Empty shell
+│   │   │   └── layout.tsx          ✅ Complete with auth
 │   │   ├── api/
-│   │   │   └── auth/               ✅ Complete (5 routes)
-│   │   ├── layout.tsx              ✅ With theme provider
-│   │   └── globals.css             ✅ Dark mode support
+│   │   │   ├── auth/               ✅ Complete (5 routes)
+│   │   │   └── items/              ✅ Complete (6 routes)
+│   │   │       ├── route.ts        ✅ GET, POST
+│   │   │       └── [id]/
+│   │   │           ├── route.ts    ✅ GET, PUT, DELETE
+│   │   │           └── stock/
+│   │   │               └── route.ts ✅ POST
+│   │   ├── layout.tsx              ✅ Root with Toaster
+│   │   └── globals.css             ✅ Dark mode + Tailwind v4
 │   ├── components/
-│   │   ├── ui/                     ✅ 5 components
-│   │   ├── layout/                 ✅ BottomNav
-│   │   └── theme-provider.tsx      ✅ Complete
+│   │   ├── ui/                     ✅ 7 components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── dropdown-menu.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── label.tsx
+│   │   │   ├── table.tsx           ✅ New
+│   │   │   └── toaster.tsx
+│   │   ├── layout/
+│   │   │   ├── bottom-nav.tsx      ✅ Complete
+│   │   │   └── header.tsx          ✅ Complete
+│   │   ├── theme-provider.tsx      ✅ Complete
+│   │   └── theme-toggle.tsx        ✅ Complete
 │   ├── lib/
 │   │   ├── auth.ts                 ✅ Complete
 │   │   ├── prisma.ts               ✅ Complete
@@ -157,29 +196,44 @@ snp-inventory/
 
 ---
 
-## 🚀 Next Actions
+## 🚀 Session 2 Achievements
 
-### Immediate (Continue Phase 2C):
-1. Complete dashboard layout with header
-2. Add theme toggle component
-3. Create empty page shells for all routes
-4. Test authentication flow end-to-end
-5. Fix any TypeScript/ESLint errors
+### Items API Implementation
+- 6 RESTful endpoints with full CRUD operations
+- Authentication-protected with JWT verification
+- Batch tracking support for expiry date management
+- Stock adjustment with performance tracking
+- Transaction logging for all changes
+- Proper error handling and validation
+- Next.js 16 async params compatibility
 
-### After Phase 2C (Start Phase 3):
-1. Build Items API routes
-2. Create Items list page
-3. Implement stock adjustment
-4. Test performance (<150ms target)
+### Items List Page
+- Functional table-based interface
+- Real-time search by name/brand
+- Pagination with 20 items per page
+- Visual stock status indicators
+- Critical item and expiry badges
+- Mobile-responsive design
+- Links to detail and add pages
+
+### Build & Deployment
+- Fixed Tailwind CSS 4 compatibility issues
+- Fixed Next.js 16 Suspense requirements
+- Fixed Next.js 16 async params in dynamic routes
+- TypeScript compilation successful
+- Production build successful (14 routes)
+- 4 commits pushed to GitHub
 
 ---
 
 ## 📊 Metrics
 
-- **Lines of Code**: ~2,500+ (23 files added in Phase 2)
-- **Database Tables**: 12 tables created, seeded
-- **API Routes**: 5 auth routes completed
-- **UI Components**: 6 components created
+- **Total Files**: 35+ TypeScript/React files
+- **Lines of Code**: ~4,000+ (estimated)
+- **Database Tables**: 12 tables, fully seeded
+- **API Routes**: 11 routes (5 auth + 6 items)
+- **UI Components**: 10 components (7 shadcn + 3 custom)
+- **Git Commits**: 4 commits this session
 - **Test Coverage**: Manual testing needed
 - **Performance**: Not yet benchmarked
 
@@ -190,20 +244,35 @@ snp-inventory/
 - **GitHub**: https://github.com/brendongl/snp-inventory
 - **Local Dev**: `npm run dev` → http://localhost:3000
 - **Database**: `npm run prisma:studio`
-- **Logs**: Check server console
+- **Build**: `npm run build`
 
 ---
 
-## 📝 Notes
+## 📝 Session 2 Notes
 
-- All 12 users seeded and ready for password setup
-- Dark mode enabled by default
-- Mobile-first design implemented
-- Authentication middleware protecting all dashboard routes
-- Discord webhook URL configured in .env
+### Technical Achievements
+1. Successfully upgraded to Tailwind CSS 4 with new PostCSS plugin
+2. Fixed all Next.js 16 breaking changes (async params, Suspense)
+3. Implemented proper batch tracking with FIFO logic
+4. Created responsive table component from scratch
+5. Integrated lucide-react for icons
+
+### Schema Corrections
+- Fixed field naming: `location` → `storageLocation`
+- Fixed field naming: `batchNumber` → `batchCode`
+- Fixed Transaction model fields to match schema
+- Added `dateReceived` for batch tracking
+
+### Next Priorities
+1. Item detail page with batch information
+2. Add/edit item forms with validation
+3. Stock adjustment modal with batch selection
+4. Image upload functionality
+5. Low stock alerts page
+6. Transaction logs viewer
 
 ---
 
-**Status**: Ready for Phase 2C completion and Phase 3 start
+**Status**: Phase 3A Complete, Ready for Phase 3B
 **Blocker**: None
-**Estimated completion for MVP**: 6-8 weeks remaining
+**Estimated completion for MVP**: 4-6 weeks remaining
