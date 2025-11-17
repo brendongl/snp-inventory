@@ -1,0 +1,279 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String?  @map("password_hash") // NULL for first-time login
+  fullName      String?  @map("full_name")
+  role          UserRole @default(STAFF)
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  createdItems     Item[]        @relation("ItemCreator")
+  updatedItems     Item[]        @relation("ItemUpdater")
+  completedItems   Item[]        @relation("ItemCompleter")
+  transactions     Transaction[]
+  settingsUpdates  SystemSetting[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+// ============================================================================
+// SUPPLIER MANAGEMENT
+// ============================================================================
+
+model Supplier {
+  id             String        @id @default(uuid())
+  name           String
+  businessName   String?       @map("business_name")
+  contactName    String?       @map("contact_name")
+  phone          String?
+  email          String?
+  website        String?
+  address        String?
+  notes          String?
+  supplierType   SupplierType? @map("supplier_type")
+  isActive       Boolean       @default(true) @map("is_active")
+
+  // Smart batching fields
+  minOrderType   MinOrderType? @map("min_order_type")
+  minOrderValue  Decimal?      @map("min_order_value") @db.Decimal(10, 2)
+
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  items           Item[]
+  lowStockAlerts  LowStockAlert[]
+
+  @@map("suppliers")
+}
+
+enum SupplierType {
+  DISTRIBUTOR
+  RETAILER
+  ONLINE
+  WHOLESALE
+  PRODUCER
+  OTHER
+}
+
+enum MinOrderType {
+  QUANTITY  // e.g., 24 cans
+  ITEMS     // e.g., 2 items
+  PRICE     // e.g., 2,000,000 VND
+}
+
+// ============================================================================
+// CATEGORIZATION
+// ============================================================================
+
+model StorageLocation {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  items Item[]
+
+  @@map("storage_locations")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  color     String?  // Hex color for UI
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  items Item[]
+
+  @@map("categories")
+}
+
+// ============================================================================
+// INVENTORY ITEMS
+// ============================================================================
+
+model Item {
+  id                String   @id @default(uuid())
+  brand             String?
+  baseName          String   @map("base_name")
+  size              String?
+  qtyWeight         String?  @map("qty_weight")
+
+  // Auto-generated display name (computed in application layer)
+  displayName       String   @map("display_name")
+
+  description       String?
+  imageUrl          String?  @map("image_url")
+  hasExpiry         Boolean  @default(false) @map("has_expiry")
+  isCritical        Boolean  @default(false) @map("is_critical")
+  isComplete        Boolean  @default(true) @map("is_complete") // For data migration
+
+  storageLocationId String?  @map("storage_location_id")
+  categoryId        String?  @map("category_id")
+  supplierId        String?  @map("supplier_id")
+
+  cost              Decimal? @db.Decimal(10, 2)
+  reorderQty        Int      @default(10) @map("reorder_qty")
+  currentStock      Int      @default(0) @map("current_stock") // DIRECT FIELD!
+
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  createdBy         String?  @map("created_by")
+  updatedBy         String?  @map("updated_by")
+  completedBy       String?  @map("completed_by")
+  completedAt       DateTime? @map("completed_at")
+
+  // Relations
+  storageLocation   StorageLocation? @relation(fields: [storageLocationId], references: [id])
+  category          Category?        @relation(fields: [categoryId], references: [id])
+  supplier          Supplier?        @relation(fields: [supplierId], references: [id])
+  creator           User?            @relation("ItemCreator", fields: [createdBy], references: [id])
+  updater           User?            @relation("ItemUpdater", fields: [updatedBy], references: [id])
+  completer         User?            @relation("ItemCompleter", fields: [completedBy], references: [id])
+
+  batches           ItemBatch[]
+  transactions      Transaction[]
+  lowStockAlertItems LowStockAlertItem[]
+
+  @@index([supplierId])
+  @@index([categoryId])
+  @@index([storageLocationId])
+  @@index([displayName])
+  @@index([currentStock])
+  @@map("items")
+}
+
+// ============================================================================
+// BATCH TRACKING (For items with expiry dates)
+// ============================================================================
+
+model ItemBatch {
+  id            String    @id @default(uuid())
+  itemId        String    @map("item_id")
+  batchCode     String    @map("batch_code") // Auto-generated
+  quantity      Int
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+  dateReceived  DateTime  @map("date_received") @db.Date
+  isDepleted    Boolean   @default(false) @map("is_depleted")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  item          Item          @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+
+  @@index([itemId])
+  @@index([expiryDate])
+  @@map("item_batches")
+}
+
+// ============================================================================
+// TRANSACTIONS (Stock In/Out Log)
+// ============================================================================
+
+model Transaction {
+  id              String          @id @default(uuid())
+  itemId          String          @map("item_id")
+  batchId         String?         @map("batch_id")
+  userId          String          @map("user_id")
+  transactionType TransactionType @map("transaction_type")
+  amount          Int             // Positive for in, negative for out
+  stockAfter      Int             @map("stock_after") // Snapshot
+  notes           String?
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  // Relations
+  item  Item       @relation(fields: [itemId], references: [id])
+  batch ItemBatch? @relation(fields: [batchId], references: [id])
+  user  User       @relation(fields: [userId], references: [id])
+
+  @@index([itemId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+enum TransactionType {
+  STOCK_IN
+  STOCK_OUT
+}
+
+// ============================================================================
+// LOW STOCK ALERTS
+// ============================================================================
+
+model LowStockAlert {
+  id               String    @id @default(uuid())
+  supplierId       String    @map("supplier_id")
+  alertSentAt      DateTime  @default(now()) @map("alert_sent_at")
+  itemsCount       Int       @map("items_count")
+  totalValue       Decimal   @map("total_value") @db.Decimal(10, 2)
+  isResolved       Boolean   @default(false) @map("is_resolved")
+  discordMessageId String?   @map("discord_message_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  supplier  Supplier            @relation(fields: [supplierId], references: [id])
+  items     LowStockAlertItem[]
+
+  @@map("low_stock_alerts")
+}
+
+model LowStockAlertItem {
+  id             String @id @default(uuid())
+  alertId        String @map("alert_id")
+  itemId         String @map("item_id")
+  currentStock   Int    @map("current_stock")
+  reorderQty     Int    @map("reorder_qty")
+  quantityNeeded Int    @map("quantity_needed")
+
+  // Relations
+  alert LowStockAlert @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  item  Item          @relation(fields: [itemId], references: [id])
+
+  @@map("low_stock_alert_items")
+}
+
+// ============================================================================
+// SYSTEM SETTINGS
+// ============================================================================
+
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  // Relations
+  updater User? @relation(fields: [updatedBy], references: [id])
+
+  @@map("system_settings")
+}
