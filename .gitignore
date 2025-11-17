@@ -56,5 +56,5 @@ Thumbs.db
 .dockerignore
 
 # Logs
-logs
+/logs
 *.log
